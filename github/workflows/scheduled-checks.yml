@@ -1,0 +1,15 @@
+# .github/workflows/scheduled-checks.yml
+name: Check for missed check-ins
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+
+jobs:
+  check-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger check alerts function
+        run: |
+          curl -X POST https://your-netlify-site.netlify.app/.netlify/functions/checkAlerts
