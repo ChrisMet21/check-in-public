@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Check-in App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 20px 0;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Daily Check-in</h1>
+    <p>Please click the button below to check in:</p>
+    <button id="checkInButton" class="button">I'm OK Today</button>
+    <div id="status" class="status"></div>
+    <div id="lastCheckin"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkInButton = document.getElementById('checkInButton');
+            const statusDiv = document.getElementById('status');
+            const lastCheckinDiv = document.getElementById('lastCheckin');
+            
+            // Display last check-in time
+            updateLastCheckinDisplay();
+            
+            // Check if we need to display an alert based on time since last check-in
+            checkAlertStatus();
+            
+            checkInButton.addEventListener('click', function() {
+                // Update the last check-in time
+                const now = new Date().toISOString();
+                localStorage.setItem('lastCheckin', now);
+                
+                // Update the display
+                statusDiv.className = 'status success';
+                statusDiv.textContent = 'Check-in successful!';
+                
+                updateLastCheckinDisplay();
+                
+                // Send the check-in to your serverless function
+                sendCheckinToServer();
+            });
+            
+            function updateLastCheckinDisplay() {
+                const lastCheckin = localStorage.getItem('lastCheckin');
+                if (lastCheckin) {
+                    const date = new Date(lastCheckin);
+                    lastCheckinDiv.textContent = 'Last check-in: ' + date.toLocaleString();
+                } else {
+                    lastCheckinDiv.textContent = 'No previous check-in found';
+                }
+            }
+            
+            function checkAlertStatus() {
+                const lastCheckin = localStorage.getItem('lastCheckin');
+                if (lastCheckin) {
+                    const lastCheckinTime = new Date(lastCheckin).getTime();
+                    const now = new Date().getTime();
+                    const hoursSinceLastCheckin = (now - lastCheckinTime) / (1000 * 60 * 60);
+                    
+                    if (hoursSinceLastCheckin > 20) {
+                        statusDiv.className = 'status warning';
+                        statusDiv.textContent = 'Warning: You need to check in soon to avoid an alert being sent.';
+                    }
+                }
+            }
+            
+            function sendCheckinToServer() {
+                // This function would call your serverless function endpoint
+                // Example using fetch:
+                fetch('https://your-netlify-function-url/.netlify/functions/checkin', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        userId: 'user123' // You would implement actual user identification
+                    })
+                })
+                .then(response => response.json())
+                .then(data => console.log('Check-in recorded on server'))
+                .catch(error => console.error('Error recording check-in:', error));
+            }
+            
+            // Check status every hour
+            setInterval(checkAlertStatus, 60 * 60 * 1000);
+        });
+    </script>
+</body>
+</html>
